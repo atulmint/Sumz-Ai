@@ -3,7 +3,7 @@ import Footer from "@/components/common/footer";
 import Header from "@/components/common/header";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Source_Sans_3 as FontSans } from "next/font/google";
 import "./globals.css";
 import { ORIGIN_URL } from "@/utils/helpers";
@@ -39,7 +39,6 @@ export const metadata: Metadata = {
     apple: "/favicon/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
-  themeColor: "#1164FF",
   metadataBase: new URL(ORIGIN_URL),
   alternates: {
     canonical: ORIGIN_URL,
@@ -78,18 +77,20 @@ export const metadata: Metadata = {
       "/favicon/apple-touch-icon-180x180.png",
     ],
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    minimumScale: 1,
-    userScalable: false,
-  },
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1164FF",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
