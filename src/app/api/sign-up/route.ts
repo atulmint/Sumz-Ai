@@ -44,13 +44,14 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const sql = await getDbConnection();
+    const supabase = await getDbConnection();
 
     try {
-      await sql(`INSERT INTO users (email, full_name) VALUES ($1, $2)`, [
-        email_addresses[0].email_address,
-        `${first_name ?? ""} ${last_name ?? ""}`.trim(),
-      ]);
+      const { error } = await supabase.from("users").insert({
+        email: email_addresses[0].email_address,
+        full_name: `${first_name ?? ""} ${last_name ?? ""}`.trim(),
+      });
+      if (error) throw error;
       console.log("User saved successfully:", {
         email: email_addresses[0].email_address,
         full_name: `${first_name ?? ""} ${last_name ?? ""}`.trim(),

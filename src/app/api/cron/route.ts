@@ -9,10 +9,13 @@ export const GET = async (req: NextRequest) => {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   
-  const sql = await getDbConnection();
+  const supabase = await getDbConnection();
 
   try {
-    await sql`UPDATE users SET upload_count = 0`;
+    const { error } = await supabase
+      .from("users")
+      .update({ upload_count: 0 });
+    if (error) throw error;
     console.log("upload_count field reset successfully!");
     return new NextResponse("Success", { status: 200 });
   } catch (error) {
