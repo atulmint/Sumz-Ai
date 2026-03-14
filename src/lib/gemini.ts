@@ -1,59 +1,38 @@
-import { SUMMARY_SYSTEM_PROMPT } from "@/utils/prompts";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-
-export const generateSummaryFromGemini = async (pdfText: string) => {
+export async function generateSummaryFromGemini(text: string) {
   try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-002",
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1500,
-      },
+      model: "gemini-2.5-flash",
     });
 
-    const prompt = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: SUMMARY_SYSTEM_PROMPT },
-            {
-              text: `Transform this document into an engaging, easy-to-read 
-              summary with contextually relevant emojis and proper markdown formatting:\n\n${pdfText}`,
-            },
-          ],
-        },
-      ],
-    };
+    const prompt = `
+You are an expert AI assistant that summarizes documents.
+
+Create a clear, structured summary of the following text.
+
+Guidelines:
+- Keep it concise
+- Use bullet points where helpful
+- Highlight key insights
+
+TEXT:
+${text}
+
+SUMMARY:
+`;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
 
-    const output = response.text();
-    if (!output) {
-      throw new Error("Gemini API: Gemini returned an empty text");
-    }
+    const response = result.response;
 
-    return output;
-  } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    const summary = response.text();
 
-    const errorMessage = error?.message?.toLowerCase() || "";
-
-    if (
-      errorMessage.includes("rate limit") ||
-      errorMessage.includes("quota") ||
-      errorMessage.includes("exceeded")
-    ) {
-      throw new Error(
-        "The server is overloaded. Please wait a moment and try again.",
-      );
-    }
-
-    throw new Error(
-      "An error occurred while generating the summary. Please try again later.",
-    );
+    return summary;
+  } catch (error) {
+    console.error("Gemini summary error:", error);
+    throw new Error("Failed to generate summary");
   }
-};
+}

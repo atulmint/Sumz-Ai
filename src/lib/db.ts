@@ -1,10 +1,10 @@
-"use server";
-import { neon } from "@neondatabase/serverless";
+import { createClient } from "@supabase/supabase-js";
 
 export async function getDbConnection() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("Database connection URL not found");
-  }
-  const sql = neon(process.env.DATABASE_URL);
-  return sql;
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  return supabase;
 }
