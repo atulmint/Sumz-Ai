@@ -35,12 +35,14 @@ export default function UploadForm() {
     const { user } = useUser();
 
     const formRef = useRef<HTMLFormElement>(null);
-    const { startUpload, routeConfig } = useUploadThing("pdfUploader", {
+    const { startUpload } = useUploadThing("pdfUploader", {
         onClientUploadComplete: () => {
             console.log("Upload completed");
         },
         onUploadError: (error: Error) => {
-            console.error(`Error uploading file! ${error.message}`);
+            console.error("Upload error:", error);
+            toast.error(`Upload failed: ${error.message}`);
+            setIsLoading(false);
         },
         onUploadBegin: () => {
             console.log("Uploading...");
@@ -69,9 +71,9 @@ export default function UploadForm() {
             toast.info("📄 Uploading file...");
 
             const response = await startUpload([file]);
-            if (!response) {
+            if (!response || response.length === 0) {
                 toast.error(
-                    "Something went wrong! Please use a valid/different PDF file.",
+                    "Upload failed. Check your connection and try again. Ensure UPLOADTHING_TOKEN is set in Vercel.",
                 );
                 setIsLoading(false);
                 return;
@@ -85,10 +87,16 @@ export default function UploadForm() {
 
             const result = await generatePdfText(response[0].serverData.file.url);
 
+            if (!result?.success || !result.data?.pdfText) {
+                toast.error(result?.error ?? "Failed to read PDF. Try a different file.");
+                setIsLoading(false);
+                return;
+            }
+
             toast.info("Generating PDF summary... ✨");
 
             const summaryResult = await generatePdfSummary({
-                pdfText: result?.data?.pdfText ?? "",
+                pdfText: result.data.pdfText,
                 fileName: formattedFileName,
             });
 
@@ -96,28 +104,35 @@ export default function UploadForm() {
 
             const { data = null } = summaryResult || {};
 
-            if (data?.summary) {
-                toast.info("Saving your summary... ✨");
-
-                storeResult = await storePdfSummaryAction({
-                    fileUrl: response[0].serverData.file.url,
-                    summary: data.summary,
-                    title: formattedFileName,
-                    fileName: file.name,
-                });
-
-                toast.success("✨ Summary successfully generated!");
-
-                const primaryEmail = user?.emailAddresses?.[0]?.emailAddress;
-                if (primaryEmail) {
-                    await addUploadToCount(primaryEmail);
-                }
-
-                formRef.current?.reset();
-                router.push(`/summaries/${storeResult.data.id}`);
+            if (!data?.summary) {
+                toast.error(summaryResult?.error ?? "Failed to generate summary. Check API keys (GEMINI_API_KEY) in Vercel.");
+                setIsLoading(false);
+                return;
             }
+
+            toast.info("Saving your summary... ✨");
+
+            storeResult = await storePdfSummaryAction({
+                fileUrl: response[0].serverData.file.url,
+                summary: data.summary,
+                title: formattedFileName,
+                fileName: file.name,
+            });
+
+            toast.success("✨ Summary successfully generated!");
+
+            const primaryEmail = user?.emailAddresses?.[0]?.emailAddress;
+            if (primaryEmail) {
+                await addUploadToCount(primaryEmail);
+            }
+
+            formRef.current?.reset();
+            router.push(`/summaries/${storeResult.data.id}`);
         } catch (error) {
             console.error("Error uploading file", error);
+            toast.error(
+                error instanceof Error ? error.message : "Something went wrong. Try again.",
+            );
             formRef.current?.reset();
         } finally {
             setIsLoading(false);
