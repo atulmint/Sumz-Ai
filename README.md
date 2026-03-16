@@ -126,7 +126,7 @@ Sumz-Ai/
 git clone https://github.com/atulmint/Sumz-Ai.git
 cd ai-saas-summarizer
 npm install
-```
+``
 
 ### Configure
 
