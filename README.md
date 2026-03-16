@@ -170,7 +170,7 @@ Open [http://localhost:3000](http://localhost:3000).
 git remote add origin https://github.com/atulmint/Sumz-Ai.git
 git branch -M main
 git push -u origin main
-```
+``
 
 ---
 
